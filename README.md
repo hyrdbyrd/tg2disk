@@ -15,3 +15,10 @@ https://yandex.ru/dev/disk-api/doc/ru/concepts/quickstart
 https://t.me/BotFather
 
 https://core.telegram.org/bots#how-do-i-create-a-bot
+
+## Setup
+
+```sh
+npm ci # устанавливаем пакеты
+npm start # запускаем приложение
+```
