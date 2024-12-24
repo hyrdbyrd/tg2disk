@@ -1,6 +1,6 @@
-import { parse } from 'node:url';
-import { Stream, Readable } from 'node:stream';
+import { parse, URL } from 'node:url';
 import { request } from 'node:https';
+import { Stream, Readable } from 'node:stream';
 
 import axios, { AxiosInstance } from 'axios';
 
@@ -156,6 +156,13 @@ export class YandexCloud {
 
     #get<T = unknown>(url: string, params: object) {
         return this.#instance.get<T>(url, { params });
+    }
+
+    getDiskFolderHref(path: string) {
+        const origin = new URL('https://disk.yandex.ru');
+        origin.pathname = `/client/disk/${path.replace(/^\//, '')}`;
+
+        return origin.href;
     }
 
     getMetaOfResource(path: string) {

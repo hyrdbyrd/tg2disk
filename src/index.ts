@@ -43,16 +43,20 @@ bot.on('message', async (msg) => {
             return;
         }
 
-        let files: Array<File> = [];
+        const botMsg = await bot.sendMessage(msg.chat.id, 'Загружаем...', { reply_to_message_id: msg.message_id });
+
+        const files: Array<File> = [];
 
         if (msg.video) files.push(msg.video);
         if (msg.photo) {
             // Достаем самое большое фото
             const mostWidth = msg.photo.sort(({ width: a }, { width: b }) => b - a)[0];
-            mostWidth && files.push(mostWidth);
+            if (mostWidth) files.push(mostWidth);
         }
 
         const done: string[] = [];
+
+        await bot.sendChatAction(msg.chat.id, 'upload_video');
 
         for (const file of files.filter((file) => !steptIds.has(file.file_id))) {
             let fileName;
@@ -65,14 +69,32 @@ bot.on('message', async (msg) => {
                 )
             );
 
-            // В теории, можно не дожидаться, но есть риски перегрузки ручки диска
-            await cloud.uploadBlob(`${ROOT}/${fileName}`, bot.getFileStream(file.file_id));
+            try {
+                await bot.getFileLink(file.file_id);
+
+                // В теории, можно не дожидаться, но есть риски перегрузки ручки диска
+                await cloud.uploadBlob(`${ROOT}/${fileName}`, bot.getFileStream(file.file_id));
+            } catch (e) {
+                if (e instanceof Error && e.message.includes('file is too big')) {
+                    bot.sendMessage(msg.chat.id, 'File is too big. Upload it manual', {
+                        reply_to_message_id: msg.message_id,
+                    });
+
+                    // Не добавляем в кэш. Считаем необработанным
+                    continue;
+                }
+            }
 
             // Добавляем файл в кэш, чтобы он больше не загружался
             steptIds.add(file.file_id);
             // Логируем всё пройденное в консольку
             done.push(`${ROOT}/${fileName}`);
         }
+
+        await bot.editMessageText(['Загруженно по ссылкам', cloud.getDiskFolderHref(ROOT), ...done].join('\n\n'), {
+            message_id: botMsg.message_id,
+            chat_id: botMsg.chat.id,
+        });
 
         console.log(done);
     } catch (e) {
