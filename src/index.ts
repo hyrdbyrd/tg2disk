@@ -19,7 +19,7 @@ const ROOT = process.env.FOLDER_ROOT!;
 
 const steptIds = new Set();
 // Каждый день чистим загруженные пройденные медиа
-setInterval(steptIds.clear, 1000 * 60 * 60 * 24);
+setInterval(() => steptIds.clear(), 1000 * 60 * 60 * 24);
 
 console.clear();
 bot.on('message', async (msg) => {
